@@ -1,0 +1,8 @@
+# Maxfiy kalitlar va boshqa kerakmas fayllarni e'tiborga olma
+.ssh/
+*.pem
+*.key
+*.pub
+__pycache__/
+*.pyc
+.env
