@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Stiverna Salomlashuv</title>
+<style>
+:root{--b:#1abc9c;--bg1:#2c3e50;--bg2:#3498db;--clr:#fff}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:30px;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:var(--clr);text-align:center}
+h1{margin-top:0}
+input,button,select{
+  padding:10px;margin:8px;font-size:16px;border:none;
+  border-radius:8px}
+button{background:var(--b);color:#fff;cursor:pointer}
+.box{
+  background:rgba(0,0,0,.25);
+  border-radius:12px;padding:20px;margin:18px auto;
+  max-width:500px}
+canvas{display:block;margin:12px auto;border-radius:10px}
+#avatar{max-width:140px;border-radius:50%;margin-top:12px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<h1>👋 Stiverna Salomlashuv</h1>
+<div id="time"></div>
+
+<!-- Ism va til -->
+<div class="box">
+  <h2 id="title">Ismingizni kiriting</h2>
+  <input id="name" placeholder="Diyorbek">
+  <button onclick="showActions()">Boshlash</button>
+  <select id="lang" onchange="setLang()">
+    <option value="uz">🇺🇿 Uzbek</option>
+    <option value="en">🇬🇧 English</option>
+  </select>
+</div>
+
+<!-- 1 / 0 javob -->
+<div id="actions" class="box hidden">
+  <p id="instr">1 — Davom etish<br>0 — Tugatish</p>
+  <input id="act" type="number" min="0" max="1">
+  <button onclick="reply()">Yuborish</button>
+  <p id="out"></p>
+</div>
+
+<!-- Musiqa -->
+<div class="box">
+  <h3>🎵 Musiqa yuklash</h3>
+  <input type="file" accept="audio/*" onchange="loadMusic(event)">
+  <audio id="player" controls style="width:100%"></audio>
+  <canvas id="vis" width="400" height="60"></canvas>
+</div>
+
+<!-- Rasm -->
+<div class="box">
+  <h3>🖼️ Rasm tanlang</h3>
+  <input type="file" accept="image/*" onchange="showImg(event)">
+  <img id="avatar">
+</div>
+
+<!-- Mikrofon -->
+<div class="box">
+  <h3>🎙️ Mikrofon</h3>
+  <button onclick="rec()">Gapirishni boshlash</button>
+  <p id="speech"></p>
+</div>
+
+<!-- TTS -->
+<div class="box">
+  <h3>📢 Matnni o‘qitish</h3>
+  <input id="tts" value="Assalomu alaykum, Diyorbek!">
+  <button onclick="speak()">Ovoz chiqarish</button>
+</div>
+
+<script>
+/* ------------- soat ------------ */
+setInterval(()=>{time.textContent=new Date().toLocaleString()},1000);
+
+/* ---------- til va ism ---------- */
+function setLang(){
+  const uz=lang.value==='uz';
+  title.textContent=uz?'Ismingizni kiriting':'Enter your name';
+  instr.innerHTML=uz?'1 — Davom etish<br>0 — Tugatish':'1 — Continue<br>0 — Exit';
+}
+function showActions(){
+  if(!name.value.trim()) return alert('Ism kiriting!');
+  actions.classList.remove('hidden');
+}
+function reply(){
+  const v=+act.value, n=name.value.trim();
+  out.textContent=
+    v===1?`Assalomu Alaykum, ${n} (STIVERNA) 😊`:
+    v===0?`Xayr, ${n}! 🌙`:
+    'Faqat 1 yoki 0 kiriting!';
+}
+
+/* ---------- rasm preview -------- */
+function showImg(e){ avatar.src=URL.createObjectURL(e.target.files[0]); }
+
+/* ---------- TTS ----------------- */
+function speak(){ speechSynthesis.speak(new SpeechSynthesisUtterance(tts.value)); }
+
+/* ---------- STT ----------------- */
+function rec(){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R){alert('Brauzeringiz STT ni qo‘llamaydi');return;}
+  const r=new R();r.lang='uz-UZ';r.start();
+  r.onresult=e=>speech.textContent=e.results[0][0].transcript;
+}
+
+/* ---------- Musiqa + vizual ------ */
+let audioCtx, analyser, dataArr, canvasCtx;
+function loadMusic(e){
+  const file=e.target.files[0]; if(!file) return;
+  player.src=URL.createObjectURL(file); player.play();
+  if(!audioCtx){
+    audioCtx=new AudioContext();
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=64;
+    dataArr=new Uint8Array(analyser.frequencyBinCount);
+    const src=audioCtx.createMediaElementSource(player);
+    src.connect(analyser); analyser.connect(audioCtx.destination);
+    canvasCtx=vis.getContext('2d'); draw();
+  }
+}
+function draw(){
+  requestAnimationFrame(draw);
+  if(!analyser) return;
+  analyser.getByteFrequencyData(dataArr);
+  canvasCtx.clearRect(0,0,vis.width,vis.height);
+  dataArr.forEach((v,i)=>{
+    const h=v/1.4; canvasCtx.fillStyle='cyan';
+    canvasCtx.fillRect(i*12,vis.height-h,10,h);
+  });
+}
+</script>
+</body>
+</html>

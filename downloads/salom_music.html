@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Stiverna Musiqali Salomlashuv</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-image: linear-gradient(to right, #a18cd1, #fbc2eb);
+      color: #222;
+      text-align: center;
+    }
+    .hidden {
+      display: none;
+    }
+    #time {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    ul#tracks {
+      list-style: none;
+      padding: 0;
+    }
+    ul#tracks li {
+      padding: 5px;
+      margin: 5px auto;
+      background: #fff;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h2 id="title">Salom, ismingizni kiriting!</h2>
+  <div id="time"></div>
+
+  <input type="text" id="nameInput" placeholder="Ismingiz">
+  <button onclick="askAction()">Davom etish</button>
+
+  <br><br>
+
+  <select id="langSelect" onchange="changeLang()">
+    <option value="uz">🇺🇿 Uzbek</option>
+    <option value="en">🇺🇸 English</option>
+  </select>
+
+  <div id="actionArea" class="hidden">
+    <p id="instruction"><strong>Davom etish — 1</strong><br><strong>Tugatish — 0</strong></p>
+    <input type="number" id="actionInput" min="0" max="1">
+    <button onclick="handleAction()">Yuborish</button>
+    <p id="message"></p>
+  </div>
+
+  <hr>
+  <h3>🎧 Musiqa tanlash:</h3>
+
+  <!-- 1. Foydalanuvchi fayl yuklaydi -->
+  <input type="file" accept="audio/*" onchange="loadFile(event)">
+  <br><br>
+
+  <!-- 2. iTunes orqali qidirish -->
+  <input id="q" placeholder="Qo'shiq yoki artist...">
+  <button onclick="search()">iTunes orqali izla</button>
+  <ul id="tracks"></ul>
+
+  <!-- 3. YouTube iframe namunasi -->
+  <h4>YouTube klip:</h4>
+  <iframe width="300" height="180" src="https://www.youtube.com/embed/CX11yw6YL1w" allowfullscreen></iframe>
+
+  <br><br>
+  <audio id="player" controls></audio>
+
+  <script>
+    let username = "";
+
+    function askAction() {
+      username = document.getElementById("nameInput").value;
+      if (username.trim() === "") {
+        alert("Iltimos, ismingizni kiriting!");
+        return;
+      }
+      document.getElementById("actionArea").classList.remove("hidden");
+    }
+
+    function handleAction() {
+      const b = parseInt(document.getElementById("actionInput").value);
+      const message = document.getElementById("message");
+
+      if (b === 1) {
+        message.innerHTML = `Assalomu Alaykum, ${username} (STIVERNA) 😊`;
+      } else if (b === 0) {
+        message.innerHTML = `Xayr, ${username}! 🌙`;
+        document.getElementById("actionInput").disabled = true;
+      } else {
+        message.innerHTML = "Faqat 1 yoki 0 ni kiriting.";
+      }
+    }
+
+    function changeLang() {
+      const lang = document.getElementById("langSelect").value;
+      if (lang === "en") {
+        document.getElementById("title").innerText = "Hello! Enter your name:";
+        document.getElementById("instruction").innerHTML = "<strong>Continue — 1</strong><br><strong>Exit — 0</strong>";
+      } else {
+        document.getElementById("title").innerText = "Salom, ismingizni kiriting!";
+        document.getElementById("instruction").innerHTML = "<strong>Davom etish — 1</strong><br><strong>Tugatish — 0</strong>";
+      }
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("time").innerText = now.toLocaleString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 1. Foydalanuvchi fayl yuklaydi
+    function loadFile(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const player = document.getElementById('player');
+        player.src = url;
+        player.play();
+      }
+    }
+
+    // 2. iTunes orqali musiqa izlash
+    async function search() {
+      const term = document.getElementById('q').value.trim();
+      if (!term) return;
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&limit=5&media=music`);
+      const data = await res.json();
+      const list = document.getElementById('tracks');
+      list.innerHTML = '';
+      data.results.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = `${t.artistName} – ${t.trackName}`;
+        li.onclick = () => {
+          const player = document.getElementById('player');
+          player.src = t.previewUrl;
+          player.play();
+        };
+        list.appendChild(li);
+      });
+    }
+  </script>
+
+</body>
+</html>
